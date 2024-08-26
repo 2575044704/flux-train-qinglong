@@ -33,9 +33,7 @@ cuda_minor_version=$(echo "$cuda_version" | awk -F'.' '{print $2}')
 echo "Cuda Version:$cuda_version"
 
 echo "install torch 2.3.1+cu121"
-pip install torch==2.3.1+cu121 torchvision==0.18.1+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
-pip install xformers==0.0.27
-
+pip install xformers==0.0.27post2 torchvision==0.19.0
 echo "Installing deps..."
 cd "$script_dir/sd-scripts" || exit
 
