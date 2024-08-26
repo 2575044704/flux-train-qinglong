@@ -1,0 +1,5 @@
+[[datasets]]
+  [[datasets.subsets]]
+  image_dir = './train/animeface/train'
+  caption_extension = '.txt'
+  conditioning_data_dir = './train/animeface/cond'
