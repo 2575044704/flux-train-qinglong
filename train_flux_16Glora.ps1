@@ -32,7 +32,7 @@ $t5xxl = "./clip/t5xxl_fp16.safetensors"
 $t5xxl_device = "" #默认cuda，显存不够可改为CPU，但是很慢
 $t5xxl_dtype = "fp32" #目前支持fp32、fp16、bf16
 $text_encoder_batch_size = 12
-$num_last_block_to_freeze = 190
+$num_last_block_to_freeze = 0
 $discrete_flow_shift = 1.0 # Euler 离散调度器的离散流位移，sd3默认为3.0
 $apply_t5_attn_mask = 1 # 是否应用T5的注意力掩码，默认为0
 
@@ -42,23 +42,27 @@ $timestep_sampling = "sigmoid" # 时间步采样方法，可选 sd3用"sigma"、
 $sigmoid_scale = 1.0 # sigmoid 采样的缩放因子，默认为 1.0。较大的值会使采样更加均匀
 $model_prediction_type = "raw" # 模型预测类型，可选 flux的"raw"、增加噪声输入"additive" 或 sd选"sigma_scaled"
 $guidance_scale = 1.0 # guidance scale，就是CFG, 默认为 1.0
+$blockwise_fused_optimizers = 1 # 是否使用块级融合优化器，默认为1
+$double_blocks_to_swap = 6 # 交换的块数，默认为6
+$single_blocks_to_swap = 0 # 交换的块数，默认为0
+$cpu_offload_checkpointing = 1 # 是否使用CPU卸载checkpoint，finetune默认开启
 
 #差异炼丹法
 $base_weights = "" #指定合并到底模basemodel中的模型路径，多个用空格隔开。默认为空，不使用。
 $base_weights_multiplier = "1.0" #指定合并模型的权重，多个用空格隔开，默认为1.0。
 
 # Train related params | 训练相关参数
-$resolution = "768,768" # image resolution w,h. 图片分辨率，宽,高。支持非正方形，但必须是 64 倍数。
-$batch_size = 1 # batch size 一次性训练图片批处理数量，根据显卡质量对应调高。
+$resolution = "1024,1024" # image resolution w,h. 图片分辨率，宽,高。支持非正方形，但必须是 64 倍数。
+$batch_size = 2 # batch size 一次性训练图片批处理数量，根据显卡质量对应调高。
 $max_train_epoches = 48 # max train epoches | 最大训练 epoch
-$save_every_n_epochs = 8 # save every n epochs | 每 N 个 epoch 保存一次
+$save_every_n_epochs = 2 # save every n epochs | 每 N 个 epoch 保存一次
 
 $gradient_checkpointing = 1 #梯度检查，开启后可节约显存，但是速度变慢
 $gradient_accumulation_steps = 1 # 梯度累加数量，变相放大batchsize的倍数
 $optimizer_accumulation_steps = 0
 
-$network_dim = 2 # network dim | 常用 4~128，不是越大越好
-$network_alpha = 16 # network alpha | 常用与 network_dim 相同的值或者采用较小的值，如 network_dim的一半 防止下溢。默认值为 1，使用较小的 alpha 需要提升学习率。
+$network_dim = 32 # network dim | 常用 4~128，不是越大越好
+$network_alpha = 32 # network alpha | 常用与 network_dim 相同的值或者采用较小的值，如 network_dim的一半 防止下溢。默认值为 1，使用较小的 alpha 需要提升学习率。
 
 $train_unet_only = 1 # train U-Net only | 仅训练 U-Net，开启这个会牺牲效果大幅减少显存使用。6G显存可以开启
 $train_text_encoder_only = 0 # train Text Encoder only | 仅训练 文本编码器
@@ -81,8 +85,8 @@ $caption_dropout_rate = 0 #0~1
 $caption_tag_dropout_rate = 0 #0~1
 
 #noise | 噪声
-$noise_offset = 0.0375 # help allow SD to gen better blacks and whites，(0-1) | 帮助SD更好分辨黑白，推荐概念0.06，画风0.1
-$adaptive_noise_scale = 0.0375 #自适应偏移调整，10%~100%的noiseoffset大小
+$noise_offset = 0 # help allow SD to gen better blacks and whites，(0-1) | 帮助SD更好分辨黑白，推荐概念0.06，画风0.1
+$adaptive_noise_scale = 0 #自适应偏移调整，10%~100%的noiseoffset大小
 $noise_offset_random_strength = 0 #噪声随机强度
 $multires_noise_iterations = 0 #多分辨率噪声扩散次数，推荐6-10,0禁用。
 $multires_noise_discount = 0 #多分辨率噪声缩放倍数，推荐0.1-0.3,上面关掉的话禁用。
@@ -97,16 +101,16 @@ $immiscible_noise = 0 #是否开启混合噪声
 
 
 # Learning rate | 学习率
-$lr = "2e-6"
-$unet_lr = "5e-4"
+$lr = "5e-5"
+$unet_lr = "8e-4"
 $text_encoder_lr = "2e-5"
-$lr_scheduler = "cosine_with_restarts"
+$lr_scheduler = "warmup_stable_decay"
 # "linear", "cosine", "cosine_with_restarts", "polynomial", "constant", "constant_with_warmup" | PyTorch自带6种动态学习率函数
 # constant，常量不变, constant_with_warmup 线性增加后保持常量不变, linear 线性增加线性减少, polynomial 线性增加后平滑衰减, cosine 余弦波曲线, cosine_with_restarts 余弦波硬重启，瞬间最大值。
 # 新增cosine_with_min_lr(适合训练lora)、warmup_stable_decay(适合训练db)、inverse_sqrt
 $lr_warmup_steps = 0 # warmup steps | 学习率预热步数，lr_scheduler 为 constant 或 adafactor 时该值需要设为0。仅在 lr_scheduler 为 constant_with_warmup 时需要填写这个值
-$lr_decay_steps = 160 # decay steps | 学习率衰减步数，仅在 lr_scheduler 为warmup_stable_decay时 需要填写，一般是10%总步数
-$lr_scheduler_num_cycles = 4 # restarts nums | 余弦退火重启次数，仅在 lr_scheduler 为 cosine_with_restarts 时需要填写这个值
+$lr_decay_steps = 40 # decay steps | 学习率衰减步数，仅在 lr_scheduler 为warmup_stable_decay时 需要填写，一般是10%总步数
+$lr_scheduler_num_cycles = 3 # restarts nums | 余弦退火重启次数，仅在 lr_scheduler 为 cosine_with_restarts 时需要填写这个值
 $lr_scheduler_timescale = 0 #times scale |时间缩放，仅在 lr_scheduler 为 inverse_sqrt 时需要填写这个值，默认同lr_warmup_steps
 $lr_scheduler_min_lr_ratio = 0.1 #min lr ratio |最小学习率比率，仅在 lr_scheduler 为 cosine_with_min_lr、、warmup_stable_decay 时需要填写这个值，默认0
 
@@ -141,7 +145,7 @@ $caption_suffix = "" #打标后缀，可以加入相机镜头如果需要，例�
 $alpha_mask = 0 #是否使用透明蒙版检测
 
 # Output settings | 输出设置
-$output_name = "flux-test-lora" # output model name | 模型保存名称
+$output_name = "flux-test-24Glora" # output model name | 模型保存名称
 $save_model_as = "safetensors" # model save ext | 模型保存格式 ckpt, pt, safetensors
 $mixed_precision = "bf16" # 默认fp16,no,bf16可选
 $save_precision = "bf16" # 默认fp16,fp32,bf16可选
@@ -159,9 +163,9 @@ $output_config = 0 #开启后直接输出一个toml配置文件，但是无法�
 $config_file = "./toml/" + $output_name + ".toml" #输出文件保存目录和文件名称，默认用模型保存同名。
 
 #输出采样图片
-$enable_sample = 0 #1开启出图，0禁用
+$enable_sample = 1 #1开启出图，0禁用
 $sample_at_first = 0 #是否在训练开始时就出图
-$sample_every_n_epochs = 2 #每n个epoch出一次图
+$sample_every_n_epochs = 24 #每n个epoch出一次图
 $sample_prompts = "./toml/qinglong.txt" #prompt文件路径
 $sample_sampler = "euler_a" #采样器 'ddim', 'pndm', 'heun', 'dpmsolver', 'dpmsolver++', 'dpmsingle', 'k_lms', 'k_euler', 'k_euler_a', 'k_dpm_2', 'k_dpm_2_a'
 
@@ -346,26 +350,41 @@ if ($train_mode -ilike "*db") {
       $debiased_estimation_loss = 0
       $immiscible_noise = 0
     }
-    elseif ($train_mode -ieq "sdxl_db") {
-      $laungh_script = "train";
-      if ($diffusers_xformers -ne 0) {
-        [void]$ext_args.Add("--diffusers_xformers")
-      }
-      if ($train_text_encoder -ne 0) {
-        [void]$ext_args.Add("--train_text_encoder")
-        if ($learning_rate_te1 -ne 0) {
-          [void]$ext_args.Add("--learning_rate_te1=$learning_rate_te1")
-        }
-        if ($learning_rate_te2 -ne 0) {
-          [void]$ext_args.Add("--learning_rate_te2=$learning_rate_te2")
-        }
-      }
-      if ($enable_block_lr -ne 0) {
-        [void]$ext_args.Add("--block_lr=$block_lr")   
-      }
-    }
     else {
       $laungh_script = "train"
+      if ($train_mode -ieq "sdxl_db") {
+        if ($diffusers_xformers -ne 0) {
+          [void]$ext_args.Add("--diffusers_xformers")
+        }
+        if ($train_text_encoder -ne 0) {
+          [void]$ext_args.Add("--train_text_encoder")
+          if ($learning_rate_te1 -ne 0) {
+            [void]$ext_args.Add("--learning_rate_te1=$learning_rate_te1")
+          }
+          if ($learning_rate_te2 -ne 0) {
+            [void]$ext_args.Add("--learning_rate_te2=$learning_rate_te2")
+          }
+        }
+        if ($enable_block_lr -ne 0) {
+          [void]$ext_args.Add("--block_lr=$block_lr")   
+        }
+      }
+      elseif ($train_mode -ieq "flux_db") {
+        $cpu_offload_checkpointing = 1
+        $blockwise_fused_optimizers = 1
+        if ($blockwise_fused_optimizers -ne 0) {
+          [void]$ext_args.Add("--blockwise_fused_optimizers")
+        }
+        if ($double_blocks_to_swap -ne 0) {
+          [void]$ext_args.Add("--double_blocks_to_swap=$double_blocks_to_swap")
+        }
+        if ($single_blocks_to_swap -ne 0) {
+          [void]$ext_args.Add("--single_blocks_to_swap=$single_blocks_to_swap")
+        }
+        if ($cpu_offload_checkpointing -ne 0) {
+          [void]$ext_args.Add("--cpu_offload_checkpointing")
+        }
+      }
     }
   }
 }
@@ -431,7 +450,7 @@ if ($train_mode -ilike "sd3*" -or $train_mode -ilike "flux*") {
   if ($apply_t5_attn_mask) {
     [void]$ext_args.Add("--apply_t5_attn_mask")
   }
-  if ($num_last_block_to_freeze) {
+  if ($num_last_block_to_freeze -ne 0) {
     [void]$ext_args.Add("--num_last_block_to_freeze=$num_last_block_to_freeze")
   }
   if ($train_mode -ilike "flux*") {
@@ -488,6 +507,9 @@ if ($train_mode -ilike "sd3*" -or $train_mode -ilike "flux*") {
     }
     if ($discrete_flow_shift) {
       [void]$ext_args.Add("--discrete_flow_shift=$discrete_flow_shift")
+    }
+    if ($timestep_sampling) {
+      [void]$ext_args.Add("--timestep_sampling=$timestep_sampling")
     }
   }
   if ($cache_text_encoder_outputs -ne 0) { 
