@@ -4,11 +4,11 @@
 $train_mode = "flux_lora"
 
 # Train data path | 设置训练用模型、图片
-$pretrained_model = "./Stable-diffusion/flux/flux1-dev.safetensors" # base model path | 底模路径
-$vae = "./VAE/ae.sft"
+$pretrained_model = "/teamspace/studios/this_studio/flux/flux1-dev.safetensors" # base model path | 底模路径
+$vae = "/teamspace/studios/this_studio/flux/ae.safetensors"
 $is_v2_model = 0 # SD2.0 model | SD2.0模型 2.0模型下 clip_skip 默认无效
 $v_parameterization = 1 # parameterization | 参数化 v2 非512基础分辨率版本必须使用。
-$train_data_dir = "./train/qinglong/train" # train dataset path | 训练数据集路径
+$train_data_dir = "/teamspace/studios/this_studio/train" # train dataset path | 训练数据集路径
 $reg_data_dir = ""	# reg dataset path | 正则数据集化路径
 $network_weights = "" # pretrained weights for LoRA network | 若需要从已有的 LoRA 模型上继续训练，请填写 LoRA 模型路径。
 $network_multiplier = 1.0 # lora权重倍数，默认1.0
@@ -26,11 +26,11 @@ $previewer_checkpoint_path = "./Stable-diffusion/train/previewer.safetensors" #�
 $adaptive_loss_weight = 1 #0关闭1开启，使用adaptive_loss_weight，官方推荐。关闭则使用P2LOSSWIGHT
 
 #SD3 训练相关参数
-$clip_l = "./clip/clip_l.safetensors"
+$clip_l = "/teamspace/studios/this_studio/flux/clip_l.safetensors"
 $clip_g = "./clip/clip_g.safetensors"
-$t5xxl = "./clip/t5xxl_fp16.safetensors"
-$t5xxl_device = "" #默认cuda，显存不够可改为CPU，但是很慢
-$t5xxl_dtype = "fp32" #目前支持fp32、fp16、bf16
+$t5xxl = "/teamspace/studios/this_studio/flux/t5xxl_fp16.safetensors"
+$t5xxl_device = "0" #默认cuda，显存不够可改为CPU，但是很慢
+$t5xxl_dtype = "fp16" #目前支持fp32、fp16、bf16
 $text_encoder_batch_size = 12
 $num_last_block_to_freeze = 0
 $discrete_flow_shift = 1.0 # Euler 离散调度器的离散流位移，sd3默认为3.0
@@ -52,9 +52,9 @@ $base_weights = "" #指定合并到底模basemodel中的模型路径，多个用
 $base_weights_multiplier = "1.0" #指定合并模型的权重，多个用空格隔开，默认为1.0。
 
 # Train related params | 训练相关参数
-$resolution = "1024,1024" # image resolution w,h. 图片分辨率，宽,高。支持非正方形，但必须是 64 倍数。
-$batch_size = 2 # batch size 一次性训练图片批处理数量，根据显卡质量对应调高。
-$max_train_epoches = 48 # max train epoches | 最大训练 epoch
+$resolution = "1280,1280" # image resolution w,h. 图片分辨率，宽,高。支持非正方形，但必须是 64 倍数。
+$batch_size = 6 # batch size 一次性训练图片批处理数量，根据显卡质量对应调高。
+$max_train_epoches = 40 # max train epoches | 最大训练 epoch
 $save_every_n_epochs = 2 # save every n epochs | 每 N 个 epoch 保存一次
 
 $gradient_checkpointing = 1 #梯度检查，开启后可节约显存，但是速度变慢
@@ -102,7 +102,7 @@ $immiscible_noise = 0 #是否开启混合噪声
 
 # Learning rate | 学习率
 $lr = "5e-5"
-$unet_lr = "8e-4"
+$unet_lr = "1e-4"
 $text_encoder_lr = "2e-5"
 $lr_scheduler = "warmup_stable_decay"
 # "linear", "cosine", "cosine_with_restarts", "polynomial", "constant", "constant_with_warmup" | PyTorch自带6种动态学习率函数
@@ -145,7 +145,7 @@ $caption_suffix = "" #打标后缀，可以加入相机镜头如果需要，例�
 $alpha_mask = 0 #是否使用透明蒙版检测
 
 # Output settings | 输出设置
-$output_name = "flux-test-24Glora" # output model name | 模型保存名称
+$output_name = "flux-Shiratamaco" # output model name | 模型保存名称
 $save_model_as = "safetensors" # model save ext | 模型保存格式 ckpt, pt, safetensors
 $mixed_precision = "bf16" # 默认fp16,no,bf16可选
 $save_precision = "bf16" # 默认fp16,fp32,bf16可选
@@ -163,20 +163,20 @@ $output_config = 0 #开启后直接输出一个toml配置文件，但是无法�
 $config_file = "./toml/" + $output_name + ".toml" #输出文件保存目录和文件名称，默认用模型保存同名。
 
 #输出采样图片
-$enable_sample = 1 #1开启出图，0禁用
-$sample_at_first = 0 #是否在训练开始时就出图
-$sample_every_n_epochs = 24 #每n个epoch出一次图
+$enable_sample = 0 #1开启出图，0禁用
+$sample_at_first = 1 #是否在训练开始时就出图
+$sample_every_n_epochs = 1 #每n个epoch出一次图
 $sample_prompts = "./toml/qinglong.txt" #prompt文件路径
 $sample_sampler = "euler_a" #采样器 'ddim', 'pndm', 'heun', 'dpmsolver', 'dpmsolver++', 'dpmsingle', 'k_lms', 'k_euler', 'k_euler_a', 'k_dpm_2', 'k_dpm_2_a'
 
 #wandb 日志同步
-$wandb_api_key = "" # wandbAPI KEY，用于登录
+$wandb_api_key = "e7dcd30d25fbbfd850b21630a7c4afd26039b8b5" # wandbAPI KEY，用于登录
 
 # 其他设置
 $enable_bucket = 1 #开启分桶
 $min_bucket_reso = 256 # arb min resolution | arb 最小分辨率
 $max_bucket_reso = 2048 # arb max resolution | arb 最大分辨率
-$bucket_no_upscale = 1 #分桶不放大
+$bucket_no_upscale = 0 #分桶不放大
 $persistent_workers = 1 # makes workers persistent, further reduces/eliminates the lag in between epochs. however it may increase memory usage | 跑的更快，吃内存。大概能提速2倍
 $vae_batch_size = 4 #vae批处理大小，2-4
 $clip_skip = 2 # clip skip | 玄学 一般用 2
