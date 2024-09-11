@@ -4,17 +4,17 @@
 $train_mode = "flux_lora"
 
 # Train data path | 设置训练用模型、图片
-$pretrained_model = "/teamspace/studios/this_studio/flux/flux1-dev.safetensors" # base model path | 底模路径
-$vae = "/teamspace/studios/this_studio/flux/ae.safetensors"
+$pretrained_model = "./Stable-diffusion/flux/flux1-dev.safetensors" # base model path | 底模路径
+$vae = "./VAE/ae.sft"
 $is_v2_model = 0 # SD2.0 model | SD2.0模型 2.0模型下 clip_skip 默认无效
 $v_parameterization = 1 # parameterization | 参数化 v2 非512基础分辨率版本必须使用。
-$train_data_dir = "/teamspace/studios/this_studio/train" # train dataset path | 训练数据集路径
+$train_data_dir = "./train/qinglong/train" # train dataset path | 训练数据集路径
 $reg_data_dir = ""	# reg dataset path | 正则数据集化路径
 $network_weights = "" # pretrained weights for LoRA network | 若需要从已有的 LoRA 模型上继续训练，请填写 LoRA 模型路径。
 $network_multiplier = 1.0 # lora权重倍数，默认1.0
 $training_comment = "this LoRA model created from bdsqlsz by bdsqlsz'script" # training_comment | 训练介绍，可以写作者名或者使用触发关键词
 $dataset_class = ""
-$dataset_config = ""
+$dataset_config = "" # dataset config | 数据集配置文件路径
 $disable_mmap_load_safetensors = 0 #在wsl下加载模型速度增加
 
 #stable_cascade 训练相关参数
@@ -26,19 +26,19 @@ $previewer_checkpoint_path = "./Stable-diffusion/train/previewer.safetensors" #�
 $adaptive_loss_weight = 1 #0关闭1开启，使用adaptive_loss_weight，官方推荐。关闭则使用P2LOSSWIGHT
 
 #SD3 训练相关参数
-$clip_l = "/teamspace/studios/this_studio/flux/clip_l.safetensors"
+$clip_l = "./clip/clip_l.safetensors"
 $clip_g = "./clip/clip_g.safetensors"
-$t5xxl = "/teamspace/studios/this_studio/flux/t5xxl_fp16.safetensors"
-$t5xxl_device = "0" #默认cuda，显存不够可改为CPU，但是很慢
-$t5xxl_dtype = "fp16" #目前支持fp32、fp16、bf16
+$t5xxl = "./clip/t5xxl_fp16.safetensors"
+$t5xxl_device = "" #默认cuda，显存不够可改为CPU，但是很慢
+$t5xxl_dtype = "fp32" #目前支持fp32、fp16、bf16
 $text_encoder_batch_size = 12
 $num_last_block_to_freeze = 0
-$discrete_flow_shift = 1.0 # Euler 离散调度器的离散流位移，sd3默认为3.0
+$discrete_flow_shift = 1.15 # Euler 离散调度器的离散流位移，sd3默认为3.0
 $apply_t5_attn_mask = 1 # 是否应用T5的注意力掩码，默认为0
 
 #flux 相关参数
 $ae = $vae
-$timestep_sampling = "sigmoid" # 时间步采样方法，可选 sd3用"sigma"、普通DDPM用"uniform" 或 flux用"sigmoid"
+$timestep_sampling = "shift" # 时间步采样方法，可选 sd3用"sigma"、普通DDPM用"uniform" 或 flux用"sigmoid" 或者 "shift". shift需要修改discarete_flow_shift的参数
 $sigmoid_scale = 1.0 # sigmoid 采样的缩放因子，默认为 1.0。较大的值会使采样更加均匀
 $model_prediction_type = "raw" # 模型预测类型，可选 flux的"raw"、增加噪声输入"additive" 或 sd选"sigma_scaled"
 $guidance_scale = 1.0 # guidance scale，就是CFG, 默认为 1.0
@@ -46,16 +46,18 @@ $blockwise_fused_optimizers = 1 # 是否使用块级融合优化器，默认为1
 $double_blocks_to_swap = 6 # 交换的块数，默认为6
 $single_blocks_to_swap = 0 # 交换的块数，默认为0
 $cpu_offload_checkpointing = 1 # 是否使用CPU卸载checkpoint，finetune默认开启
+$mem_eff_save = 1 # 是否使用内存高效保存，默认为1
+$split_qkv=1 # 是否分离QKV，默认为1
 
 #差异炼丹法
 $base_weights = "" #指定合并到底模basemodel中的模型路径，多个用空格隔开。默认为空，不使用。
 $base_weights_multiplier = "1.0" #指定合并模型的权重，多个用空格隔开，默认为1.0。
 
 # Train related params | 训练相关参数
-$resolution = "1280,1280" # image resolution w,h. 图片分辨率，宽,高。支持非正方形，但必须是 64 倍数。
-$batch_size = 6 # batch size 一次性训练图片批处理数量，根据显卡质量对应调高。
-$max_train_epoches = 40 # max train epoches | 最大训练 epoch
-$save_every_n_epochs = 2 # save every n epochs | 每 N 个 epoch 保存一次
+$resolution = "1024,1024" # image resolution w,h. 图片分辨率，宽,高。支持非正方形，但必须是 64 倍数。
+$batch_size = 2 # batch size 一次性训练图片批处理数量，根据显卡质量对应调高。
+$max_train_epoches = 18 # max train epoches | 最大训练 epoch
+$save_every_n_epochs = 4 # save every n epochs | 每 N 个 epoch 保存一次
 
 $gradient_checkpointing = 1 #梯度检查，开启后可节约显存，但是速度变慢
 $gradient_accumulation_steps = 1 # 梯度累加数量，变相放大batchsize的倍数
@@ -101,16 +103,16 @@ $immiscible_noise = 0 #是否开启混合噪声
 
 
 # Learning rate | 学习率
-$lr = "5e-5"
-$unet_lr = "1e-4"
+$lr = "1e-5"
+$unet_lr = "8e-4"
 $text_encoder_lr = "2e-5"
-$lr_scheduler = "warmup_stable_decay"
+$lr_scheduler = "cosine_with_min_lr"
 # "linear", "cosine", "cosine_with_restarts", "polynomial", "constant", "constant_with_warmup" | PyTorch自带6种动态学习率函数
 # constant，常量不变, constant_with_warmup 线性增加后保持常量不变, linear 线性增加线性减少, polynomial 线性增加后平滑衰减, cosine 余弦波曲线, cosine_with_restarts 余弦波硬重启，瞬间最大值。
 # 新增cosine_with_min_lr(适合训练lora)、warmup_stable_decay(适合训练db)、inverse_sqrt
-$lr_warmup_steps = 0 # warmup steps | 学习率预热步数，lr_scheduler 为 constant 或 adafactor 时该值需要设为0。仅在 lr_scheduler 为 constant_with_warmup 时需要填写这个值
-$lr_decay_steps = 40 # decay steps | 学习率衰减步数，仅在 lr_scheduler 为warmup_stable_decay时 需要填写，一般是10%总步数
-$lr_scheduler_num_cycles = 3 # restarts nums | 余弦退火重启次数，仅在 lr_scheduler 为 cosine_with_restarts 时需要填写这个值
+$lr_warmup_steps = 24 # warmup steps | 学习率预热步数，lr_scheduler 为 constant 或 adafactor 时该值需要设为0。仅在 lr_scheduler 为 constant_with_warmup 时需要填写这个值
+$lr_decay_steps = 48 # decay steps | 学习率衰减步数，仅在 lr_scheduler 为warmup_stable_decay时 需要填写，一般是10%总步数
+$lr_scheduler_num_cycles = 1 # restarts nums | 余弦退火重启次数，仅在 lr_scheduler 为 cosine_with_restarts 时需要填写这个值
 $lr_scheduler_timescale = 0 #times scale |时间缩放，仅在 lr_scheduler 为 inverse_sqrt 时需要填写这个值，默认同lr_warmup_steps
 $lr_scheduler_min_lr_ratio = 0.1 #min lr ratio |最小学习率比率，仅在 lr_scheduler 为 cosine_with_min_lr、、warmup_stable_decay 时需要填写这个值，默认0
 
@@ -145,7 +147,7 @@ $caption_suffix = "" #打标后缀，可以加入相机镜头如果需要，例�
 $alpha_mask = 0 #是否使用透明蒙版检测
 
 # Output settings | 输出设置
-$output_name = "flux-Shiratamaco" # output model name | 模型保存名称
+$output_name = "flux-test-loraqkv" # output model name | 模型保存名称
 $save_model_as = "safetensors" # model save ext | 模型保存格式 ckpt, pt, safetensors
 $mixed_precision = "bf16" # 默认fp16,no,bf16可选
 $save_precision = "bf16" # 默认fp16,fp32,bf16可选
@@ -163,20 +165,20 @@ $output_config = 0 #开启后直接输出一个toml配置文件，但是无法�
 $config_file = "./toml/" + $output_name + ".toml" #输出文件保存目录和文件名称，默认用模型保存同名。
 
 #输出采样图片
-$enable_sample = 0 #1开启出图，0禁用
-$sample_at_first = 1 #是否在训练开始时就出图
-$sample_every_n_epochs = 1 #每n个epoch出一次图
+$enable_sample = 1 #1开启出图，0禁用
+$sample_at_first = 0 #是否在训练开始时就出图
+$sample_every_n_epochs = 3 #每n个epoch出一次图
 $sample_prompts = "./toml/qinglong.txt" #prompt文件路径
 $sample_sampler = "euler_a" #采样器 'ddim', 'pndm', 'heun', 'dpmsolver', 'dpmsolver++', 'dpmsingle', 'k_lms', 'k_euler', 'k_euler_a', 'k_dpm_2', 'k_dpm_2_a'
 
 #wandb 日志同步
-$wandb_api_key = "e7dcd30d25fbbfd850b21630a7c4afd26039b8b5" # wandbAPI KEY，用于登录
+$wandb_api_key = "" # wandbAPI KEY，用于登录
 
 # 其他设置
 $enable_bucket = 1 #开启分桶
 $min_bucket_reso = 256 # arb min resolution | arb 最小分辨率
 $max_bucket_reso = 2048 # arb max resolution | arb 最大分辨率
-$bucket_no_upscale = 0 #分桶不放大
+$bucket_no_upscale = 1 #分桶不放大
 $persistent_workers = 1 # makes workers persistent, further reduces/eliminates the lag in between epochs. however it may increase memory usage | 跑的更快，吃内存。大概能提速2倍
 $vae_batch_size = 4 #vae批处理大小，2-4
 $clip_skip = 2 # clip skip | 玄学 一般用 2
@@ -277,16 +279,36 @@ $conditioning_data_dir = ""
 $cond_emb_dim = 32
 $masked_loss = 0 #开启蒙版loss，对条件图处理，R通道255视为掩码mask，0视为无掩码
 
+#多卡设置
+$multi_gpu=0                         #multi gpu | 多显卡训练开关，0关1开， 该参数仅限在显卡数 >= 2 使用
+$deepspeed=0                         #deepspeed | 使用deepspeed训练，0关1开， 该参数仅限在显卡数 >= 2 使用
+$zero_stage=2                        #zero stage | zero stage 0,1,2,3,阶段2用于训练 该参数仅限在显卡数 >= 2 使用
+$offload_optimizer_device=""      #offload optimizer device | 优化器放置设备，cpu或者nvme, 该参数仅限在显卡数 >= 2 使用
+$fp16_master_weights_and_gradients=0 #fp16 master weights and gradients | fp16主权重和梯度，0关1开， 该参数仅限在显卡数 >= 2 使用
+
+$ddp_timeout=120
+$ddp_gradient_as_bucket_view=1
+$ddp_static_graph=1
+
 # ============= DO NOT MODIFY CONTENTS BELOW | 请勿修改下方内容 =====================
 # Activate python venv
 Set-Location $PSScriptRoot
-.\venv\Scripts\activate
+if ($env:OS -ilike "*windows*" -and (Test-Path "./venv/Scripts/activate")) {
+    # 激活Windows平台的虚拟环境
+    Write-Output "Windows venv"
+    ./venv/Scripts/activate
+}
+elseif (Test-Path "./venv/bin/activate") {
+    Write-Output "Linux venv"
+    ./venv/bin/activate
+}
 
 $Env:HF_HOME = "huggingface"
 $Env:XFORMERS_FORCE_DISABLE_TRITON = "1"
 $Env:HF_ENDPOINT = "https://hf-mirror.com"
 $network_module = "networks.lora"
 $ext_args = [System.Collections.ArrayList]::new()
+$launch_args = [System.Collections.ArrayList]::new()
 $laungh_script = "train_network"
 
 if ($train_mode -ieq "stable_cascade_lora") {
@@ -294,6 +316,37 @@ if ($train_mode -ieq "stable_cascade_lora") {
 }
 elseif ($train_mode -ieq "flux_lora") {
   $network_module = $network_module + "_flux"
+  if ($split_qkv -ne 0) {
+    [void]$ext_args.Add("--network_args")
+    [void]$ext_args.Add("split_qkv=True")
+  }
+}
+
+if ($multi_gpu -eq 1) {
+    $launch_args += "--multi_gpu"
+    $launch_args += "--mixed_precision=$mixed_precision"
+    $blockwise_fused_optimizers = 0
+    if ($deepspeed -eq 1) {
+        [void]$ext_args.Add("--deepspeed")
+        if ($zero_stage -ne 0) {
+            [void]$ext_args.Add("--zero_stage=$zero_stage")
+        }
+        if ($offload_optimizer_device) {
+            [void]$ext_args.Add("--offload_optimizer_device=$offload_optimizer_device")
+        }
+        if ($fp16_master_weights_and_gradients -eq 1) {
+            [void]$ext_args.Add("--fp16_master_weights_and_gradients")
+        }
+    }
+    if ($ddp_timeout -ne 0) {
+        [void]$ext_args.Add("--ddp_timeout=$ddp_timeout")
+    }
+    if ($ddp_gradient_as_bucket_view -ne 0) {
+        [void]$ext_args.Add("--ddp_gradient_as_bucket_view")
+    }
+    if ($ddp_static_graph -ne 0) {
+        [void]$ext_args.Add("--ddp_static_graph")
+    }
 }
 
 if (-not ($train_mode -ilike "*lora")) {
@@ -370,8 +423,7 @@ if ($train_mode -ilike "*db") {
         }
       }
       elseif ($train_mode -ieq "flux_db") {
-        $cpu_offload_checkpointing = 1
-        $blockwise_fused_optimizers = 1
+        $mem_eff_save = 1
         if ($blockwise_fused_optimizers -ne 0) {
           [void]$ext_args.Add("--blockwise_fused_optimizers")
         }
@@ -383,6 +435,9 @@ if ($train_mode -ilike "*db") {
         }
         if ($cpu_offload_checkpointing -ne 0) {
           [void]$ext_args.Add("--cpu_offload_checkpointing")
+        }
+        if ($mem_eff_save -ne 0) {
+          [void]$ext_args.Add("--mem_eff_save")
         }
       }
     }
@@ -473,6 +528,9 @@ if ($train_mode -ilike "sd3*" -or $train_mode -ilike "flux*") {
     if ($guidance_scale) {
       [void]$ext_args.Add("--guidance_scale=$guidance_scale")
     }
+    if ($guidance_rescale -ne 0) {
+      [void]$ext_args.Add("--guidance_rescale")
+    }
     if ($ae) {
       [void]$ext_args.Add("--ae=$ae")
       $vae = ""
@@ -507,9 +565,6 @@ if ($train_mode -ilike "sd3*" -or $train_mode -ilike "flux*") {
     }
     if ($discrete_flow_shift) {
       [void]$ext_args.Add("--discrete_flow_shift=$discrete_flow_shift")
-    }
-    if ($timestep_sampling) {
-      [void]$ext_args.Add("--timestep_sampling=$timestep_sampling")
     }
   }
   if ($cache_text_encoder_outputs -ne 0) { 
@@ -572,6 +627,20 @@ else {
   [void]$ext_args.Add("--train_data_dir=$train_data_dir")
   if ($reg_data_dir) {
     [void]$ext_args.Add("--reg_data_dir=$reg_data_dir")
+  }
+  if ($batch_size) {
+    [void]$ext_args.Add("--train_batch_size=$batch_size")
+  }
+  if ($resolution) {
+    [void]$ext_args.Add("--resolution=$resolution")
+  }
+  if ($enable_bucket) {
+    [void]$ext_args.Add("--enable_bucket")
+    [void]$ext_args.Add("--min_bucket_reso=$min_bucket_reso")
+    [void]$ext_args.Add("--max_bucket_reso=$max_bucket_reso")
+    if ($bucket_no_upscale) {
+      [void]$ext_args.Add("--bucket_no_upscale")
+    }
   }
 }
 
@@ -1069,15 +1138,6 @@ if ($base_weights) {
   }
 }
 
-if ($enable_bucket) {
-  [void]$ext_args.Add("--enable_bucket")
-  [void]$ext_args.Add("--min_bucket_reso=$min_bucket_reso")
-  [void]$ext_args.Add("--max_bucket_reso=$max_bucket_reso")
-  if ($bucket_no_upscale) {
-    [void]$ext_args.Add("--bucket_no_upscale")
-  }
-}
-
 if ($fused_backward_pass -ne 0) {
   [void]$ext_args.Add("--fused_backward_pass")
   $gradient_accumulation_steps = 0
@@ -1162,14 +1222,12 @@ if ($caption_tag_dropout_rate) {
 }
 
 # run train
-accelerate launch --num_cpu_threads_per_process=8 "./sd-scripts/$laungh_script.py" `
+python -m accelerate.commands.launch --num_cpu_threads_per_process=8 $launch_args "./sd-scripts/$laungh_script.py" `
   --output_dir="./output" `
   --logging_dir="./logs" `
-  --resolution=$resolution `
   --max_train_epochs=$max_train_epoches `
   --learning_rate=$lr `
   --output_name=$output_name `
-  --train_batch_size=$batch_size `
   --save_every_n_epochs=$save_every_n_epochs `
   --save_precision=$save_precision `
   --seed=$seed  `
